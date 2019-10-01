@@ -18,7 +18,7 @@ circle {
 
 text {
   fill: #000;
-  font: 10px sans-serif;
+  font: 13px sans-serif;
   pointer-events: none;
 }
 
@@ -205,11 +205,19 @@ var svg = d3.select("body").append("svg")
 // add the links and the arrows
 
 var path = svg.append("g")
-.selectAll("path")
-.data(links)
-.enter()
-.append("path")
-.attr("class", function(d) { return "link " + d.type; });
+    .selectAll("path")
+    .data(links)
+    .enter()
+    .append("path")
+    .attr("class", function(d) { return "link " + d.type; })
+    .attr("style", function(d) {
+        if (d.value == 0) {
+            return "stroke-width: 1px; stroke: black; stroke-dasharray: 5,3;";
+
+        } else {
+            return "stroke-width: 5px; stroke: green;"
+        }
+    });
 
 // define the nodes
 var node = svg.selectAll(".node")
@@ -220,11 +228,44 @@ var node = svg.selectAll(".node")
       .on("start", dragstarted)
       .on("drag", dragged)
       .on("end", dragended)
-      );
+      )
+    .on("dblclick", dblclicked);
+
+var colorScale = d3.scaleSequential(d3.interpolateBlues)
+    .domain([1, 9]);
 
 // add the nodes
 node.append("circle")
-    .attr("r", 5);
+    .attr("r", function(d) {
+        d.weight = path.filter(function(l) {
+            return l.source.index == d.index  || l.target.index == d.index;
+        }).size();
+        console.log(d.weight);
+        return 4 + (d.weight * 2);
+    })
+    .style("fill", function(d) {
+        return colorScale(d.weight);
+    })
+    .style("stroke", function(d) {
+        if (d.fixed == true) {
+            return "red";
+        } else {
+            return "black";
+        }
+    })
+;
+
+node.append("text")
+    .text(function(d) {
+        return d.name;
+    })
+//    .attr("x", function(d) {
+//        return d.target.x + 5;
+//    })
+//    .attr("y", function(d) {
+//        return d.target.y - 100;
+//    })
+;
 
 // add the curvy lines
 function tick() {
@@ -250,6 +291,22 @@ function dragstarted(d) {
       d.fx = d.x;
       d.fy = d.y;
     };
+
+function dblclicked(d) {
+    if (d.fixed == true) {
+        d.fixed = false;
+        d.fx = null;
+        d.fy = null;
+        d3.select(this)
+            .style("stroke", null);
+    } else {
+        d.fixed = true;
+        d.fx = d.x;
+        d.fy = d.y;
+        d3.select(this)
+            .style("stroke", "red");
+    }
+}
 
 function dragged(d) {
   d.fx = d3.event.x;
