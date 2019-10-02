@@ -1,23 +1,8 @@
-var margin = {top: 50, right: 80, bottom: 80, left: 80}
-    , width = 960 - margin.left - margin.right
-    , height = 500 - margin.top - margin.bottom;
-var dataset;
-var parseTime = d3.timeParse("%Y");
-var colors = {
-    '5_5.9': '#FFC300',
-    '6_6.9': '#FF5733',
-    '7_7.9': '#C70039',
-    '8.0+': '#900C3F'};
-var fields = Object.keys(colors);
+function base_chart(dataset, title, postYScale, preYScale, yMin) {
+    postYScale = postYScale || d3.scaleLinear();
+    preYScale = preYScale || function(val) { return val; };
+    yMin = yMin || 0;
 
-dataset = d3.dsv(",", "earthquakes.csv", function(d) {
-    var obj = {year: parseTime(d.year)};
-    fields.forEach(function(field) {
-        obj[field] = +d[field]
-    });
-    obj.estimated_deaths = +d["Estimated Deaths"];
-    return obj;
-}).then(function(dataset) {
     var magnitudes = Object.keys(colors).map(function(magnitude) {
         return {
             magnitude: magnitude,
@@ -30,6 +15,7 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
             })
         };
     });
+
     var xScale = d3.scaleTime()
         .domain([
             d3.min(dataset, function(d) { return d.year;}),
@@ -37,21 +23,25 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
         ])
         .range([0, width]);
 
-    var yScale = d3.scaleLinear()
-        .domain([
-            d3.min(dataset, function(d) {return d["8.0+"]}),
+    postYScale.domain([
+            Math.max(d3.min(dataset, function(d) {return d["8.0+"]}), yMin),
             d3.max(dataset, function(d) {return d["5_5.9"]})
         ])
         .range([height, 0]);
 
+    function yScale(val) {
+        return postYScale(preYScale(val));
+    }
+
     var svg = d3.select("body").append("svg")
+        .attr("class", "svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var xAxis = d3.axisBottom()
-        .scale(xScale);  // todo: change ticks and tickformat
+        .scale(xScale);
 
     svg.append("g")
         .attr("class", "axis")
@@ -60,12 +50,12 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
 
     svg.append("g")
         .attr("class", "axis")
-        .call(d3.axisLeft(yScale)); // todo: check if need to add ticks
+        .call(d3.axisLeft(postYScale));
 
     var line = d3.line()
         .x(function(d) { return xScale(d.year); })
         .y(function(d) { return yScale(d.value); })
-        .curve(d3.curveMonotoneX); // todo: what is that?
+        .curve(d3.curveMonotoneX);
 
     svg.selectAll(".path")
         .data(magnitudes)
@@ -84,7 +74,7 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
         .enter()
         .append("rect")
         .attr("class", "legend-rect")
-        .attr("x", width - 60)
+        .attr("x", width + 10)
         .attr("y", function(d, i) { return legendScale(i); })
         .style("fill", function(d) { return d.color; });
 
@@ -94,9 +84,9 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
         .append("text")
         .attr("class", "legend-text")
         .attr("dominant-baseline", "hanging")
-        .attr("x", width - 30)
+        .attr("x", width + 40)
         .attr("y", function(d, i) { return legendScale(i); })
-        .text(function(d) {console.log(d.magnitude); return d.magnitude; });
+        .text(function(d) { return d.magnitude; });
 
     svg.append("text")
         .attr("x", width/2)
@@ -122,13 +112,42 @@ dataset = d3.dsv(",", "earthquakes.csv", function(d) {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "hanging")
         .attr("class", "label-text")
-        .text("Worldwide Earthquake stats 2000-2015");
+        .text(title);
+    return {svg: svg, xScale: xScale, yScale: yScale}
+}
 
-    svg.append("circle")
-        .attr("r", 2)
-        .attr("cx", width/2)
-        .attr("cy", 0)
-        .attr("fill", "red")
+function threshold_fn(threshold) {
+    return function(val) {
+        if (val < threshold) {
+            return threshold;
+        }
+        return val;
+    };
+}
 
-});
+function add_circles(dataset, svg, xScale, yScale) {
+    radiusScale = d3.scaleLinear()
+        .domain([
+            d3.min(dataset, function(d) { return d.estimated_deaths;}),
+            d3.max(dataset, function(d) { return d.estimated_deaths;})
+        ])
+        .range([4, 13]);
+
+    var sel = svg.selectAll(".dot")
+        .data(dataset)
+        .enter();
+    Object.keys(colors).forEach(function(magnitude) {
+        sel.append("circle")
+            .attr("cx", function(d) { return xScale(d.year); })
+            .attr("cy", function(d) { return yScale(d[magnitude]); })
+            .attr("fill", colors[magnitude])
+            .attr("r", function(d) { return radiusScale(d.estimated_deaths);});
+    });
+
+}
+function pagebreak() {
+    d3.select("body")
+        .append("div")
+        .attr("class", "pagebreak")
+}
 

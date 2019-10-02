@@ -13,6 +13,12 @@
     font-family: sans-serif;
 }
 
+@media print {
+    .pagebreak {
+        page-break-before:always;
+    }
+}
+
 .dot {
     /*fill: #ffab00;*/
     /*stroke: #fff;*/
