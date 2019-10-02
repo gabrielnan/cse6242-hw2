@@ -1,0 +1,35 @@
+.line {
+    fill: none;
+    stroke-width: 2;
+}
+
+.overlay {
+    fill: none;
+    pointer-events: all;
+}
+
+.axis {
+    font-size: 15px;
+    font-family: sans-serif;
+}
+
+.dot {
+    /*fill: #ffab00;*/
+    /*stroke: #fff;*/
+}
+
+.legend-rect {
+    width: 20px;
+    height: 15px;
+}
+
+.legend-text {
+    font-size: 18px;
+    font-family: sans-serif;
+}
+
+.label-text {
+    font-size: 25px;
+    font-family: sans-serif;
+}
+
