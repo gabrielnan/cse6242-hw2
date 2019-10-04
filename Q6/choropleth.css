@@ -1,0 +1,35 @@
+.legend-text {
+    font-size: 15px;
+    font-family: sans-serif;
+}
+
+.legend-title {
+    font-size: 15px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.label-text {
+    font-size: 25px;
+    font-family: sans-serif;
+}
+
+.states {
+    fill: none;
+    stroke-width: 0.5;
+    stroke: black;
+}
+
+.tip {
+    position: absolute;
+    /*text-align: center;*/
+    /*width: 140px;*/
+    /*height: 50px;*/
+    padding: 5px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
