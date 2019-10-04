@@ -1,0 +1,25 @@
+1. Ease to develop
+Python: Easy, since matplotlib, for example, has builtin functions to create a
+wide variety of visualizations.
+Tableau: Extremely easy, as it offers “plug and play” components with dragging and drop menus.
+D3: Harder since you have to build most visualizations from scratch.
+
+2. Ease to maintain the visualization
+Python: Easy, since it can run in different machines and code can be dataset-agnostic.
+Tableau: Slightly harder, since it’s not so simple to acquire the software to the host machine.
+D3: Hard, since different versions change several function signatures.
+
+3. Usability of visualization
+Python: Difficult, user must know how to run Python and make sure all dependencies are correct.
+Tableau: Easy, as there’s no programming involved and user-friendly GUIs.
+D3: Extremely easy, D3 provides a lot of interactivity and no programming required (from end-user)
+
+4. Scalability of visualization
+Python: offers integration with Hadoop
+Tableau: also offers integration with Hadoop, but easier, since it provides GUIs
+D3: not so scalable, as it was built for visualization and interactivity and handle small datasets with a data-to-graphics binding model.
+
+5. System requirements
+Python: Python software and some packages (e.g. numpy, pandas, matplotlib). Freely available.
+Tableau: Browser and internet connection OR the Tableau desktop software with licensing (or free trial hehe)
+D3: Browser and internet connection.
