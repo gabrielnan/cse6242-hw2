@@ -1,4 +1,4 @@
-var margin = {top: 50, right: 50, bottom: 50, left: 50},
+var margin = {top: 50, right: 50, bottom: 50, left: 100},
     width = window.innerWidth - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
@@ -21,6 +21,7 @@ function getUnique(dataset, field) {
     return [...new Set(dataset.map(function(d) { return d[field];}))];
 }
 var dotRadius = 3;
+var bigDotRadius = 10;
 
 d3.dsv(",", "state-year-earthquakes.csv", function(d) {
     return {
@@ -40,7 +41,7 @@ d3.dsv(",", "state-year-earthquakes.csv", function(d) {
             var val = d3.sum(
                 dataset.filter(d => d.region == region && d.year == year.getFullYear()),
                 d => d.count);
-            values.push({year: year, value: val});
+            values.push({year: year, value: val, region: region});
         });
         return {region: region, values: values, color: colors[i]};
     });
@@ -82,8 +83,21 @@ d3.dsv(",", "state-year-earthquakes.csv", function(d) {
                 .attr("cx", d => x(d.year))
                 .attr("cy", d => y(d.value))
                 .attr("fill", data.color)
+                .style("stroke", "white")
+                .style("stroke-width", "1.5")
                 .attr("r", dotRadius)
+                .on("mouseover", handleMouseOver)
+                .on("mouseout", handleMouseOut)
         });
+
+    function handleMouseOver(d) {
+        update(d.region, d.year);
+        d3.select(this).attr("r", bigDotRadius);
+    }
+    function handleMouseOut(d) {
+        d3.select(this).attr("r", dotRadius);
+        deleteBar()
+    }
 
     svg.append("g")
         .attr("class", "axis")
@@ -125,15 +139,76 @@ d3.dsv(",", "state-year-earthquakes.csv", function(d) {
         .text(d => d.region);
 
 
-    // legend.append("circle")
-    //     .attr("cx", 0)
-    //     .attr("cy", 0)
-    //     .attr("r", 1)
-    //     .attr("fill", "black");
-
-    // svg.append("circle")
-    //     .attr("cx", offsetX)
-    //     .attr("cy", height + margin.bottom - offsetY)
+    //========================================================================
+    //========================================================================
 
 
+    var yBar = d3.scaleBand()
+        .range([height, 0]);
+
+    var xBar = d3.scaleLinear()
+        .range([0, width]);
+    var svgBar = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    function update(region, year) {
+        var filtered = dataset.filter(
+            d => d.region == region && d.year == year.getFullYear()
+        );
+        filtered.sort(function(x, y) {
+            var diff = x.count - y.count;
+            if (diff != 0) {
+                return diff
+            }
+            return d3.ascending(x.state, y.state);
+        });
+        var states = getUnique(filtered, "state");
+        var padding = "0.08";
+
+        xBar.domain([
+            0,
+            d3.max(filtered, d => d.count)
+        ]);
+        yBar.domain(states)
+            .paddingInner(padding)
+            .paddingOuter(padding);
+
+        // svgBar.selectAll("text").remove();
+        svgBar.selectAll(".axis").remove();
+        svgBar.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xBar));
+
+        svgBar.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(yBar));
+
+        svgBar.selectAll(".bar").remove()
+        svgBar.selectAll(".bar")
+            .data(filtered)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("width", d => xBar(d.count))
+            .attr("height", yBar.bandwidth())
+            .attr("x", 0)
+            .attr("y", d => yBar(d.state));
+
+        svgBar.selectAll("#title").remove();
+        svgBar.append("text")
+            .attr("id", "title")
+            .attr("x", width/2)
+            .attr("y", -margin.top)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .attr("class", "label-text")
+            .text(region + "ern Region Earthquakes " + year.getFullYear());
+    }
+    function deleteBar() {
+        svgBar.selectAll(".axis,.bar,#title").remove()
+    }
 });

@@ -30,3 +30,7 @@
     /*stroke: white;*/
     /*stroke-width: 0.5;*/
 }
+
+.bar {
+    fill: rgb(33,150,243);
+}
